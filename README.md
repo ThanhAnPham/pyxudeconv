@@ -74,7 +74,7 @@ Currently supported file formats
 An example of calling the script with a command-line
 
 ```
-python -m pyxudeconv.deconvolution.deconvolve --fres '../res/donuts' --gpu 0 --datapath '../data/real_donut/data.tif' --psfpath '../data/real_donut/psf.tif' --saveIter 10 10 10 10 10 --nviews 1 --methods 'RL' 'GARL' --Nepoch 50 --bufferwidth 20 10 10   --pxsz 79.4 79.4 1000 --bg 0 --psf_sz -1 -1 128 128 --roi 0 0 150 150 --config_GARL 'widefield_params'
+python -m pyxudeconv.deconvolve --fres '../res/donuts' --gpu 0 --datapath '../data/real_donut/data.tif' --psfpath '../data/real_donut/psf.tif' --saveIter 10 10 10 10 10 --nviews 1 --methods 'RL' 'GARL' --Nepoch 50 --bufferwidth 20 10 10   --pxsz 79.4 79.4 1000 --bg 0 --psf_sz -1 -1 128 128 --roi 0 0 150 150 --config_GARL 'widefield_params'
 ```
 
 ## Note on dependencies
@@ -90,7 +90,7 @@ If Goujon accelerated Richardon-Lucy (GARL) and/or GPU will be used, please inst
 
 ## Goujon Accelerated Richardson-Lucy (GARL)
 
-To use GARL, call `python -m pyxudeconv.deconvolution.deconvolve` with the argument `--methods 'GARL'`.
+To use GARL, call `python -m pyxudeconv.deconvolve` with the argument `--methods 'GARL'`.
 To run over different hyperparameters, you can add the argument `--config_GARL 'full_path/your_config_file.json'`.
 
 Note: Each parameter must be a list of values, even if it is a single-valued list.
@@ -117,8 +117,8 @@ Alternatively, one can set a range of values for a parameter (e.g., `lmbd`) as f
 ````
 
 ## Simulation
-
-The file `simulate.py`can simulate measurements obtained from a phantom defined by `--phantom your_phantom_file` convolved with a PSF defined by `--psfpath your_psf_file`. Future releases may change the organisation of the simulation part.
+#ToDo
+The function `simulate`can simulate measurements obtained from a phantom defined by `--phantom your_phantom_file` convolved with a PSF defined by `--psfpath your_psf_file`. Future releases may change the organisation of the simulation part.
 
 
 ## Contributing
