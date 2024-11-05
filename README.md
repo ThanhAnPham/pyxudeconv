@@ -30,12 +30,40 @@ To install latest development version :
     pip install git+https://github.com/ThanhAnPham/pyxudeconv.git
 
 
-# Deconvolution with Pyxu
+## Deconvolution with Pyxu
 
-TO_UPDATE
-The main function `deconvolve` can be called as a command-line with arguments, via a bash file (see `main_example.sh` or `main_calibration.sh`) with the option -m, or directly in a python script.
+### Deconvolving in a python code
 
-Two arguments are important to run on your own data
+After the package import, the deconvolution is performed by the function `deconvolve` which expects the parameters (namespace). To modify the parameters, there are two ways
+  - Load the default parameters via `get_param` and modify each field of interest
+    ````
+    import pyxudeconv
+    par = pyxudeconv.get_param(param_file='./params.json')
+    par.psfpath = '/home/tampham/3DWCR/data/simulated/psf_sample_calib_nv_32_coi_2.ome.tif'
+    par.datapath = '/home/tampham/3DWCR/data/simulated/g_sample_calib_nv_32_coi_2.ome.tif'
+    par.phantom = '/home/tampham/3DWCR/data/simulated/phantom_sample_calib_nv_32_coi_2.ome.tif'
+    par.fres = '/home/tampham/yo'
+    par.saveIter = [10]
+    par.methods = ['RL','GARL','Tikhonov']
+    imdeconv = pyxudeconv.deconvolve(par)
+    ````
+ - Change the json file and load it.
+    ````
+    import pyxudeconv
+    par = pyxudeconv.get_param(param_file='./my_params.json')
+    imdeconv = pyxudeconv.deconvolve(par)
+    ````
+
+Note that `par.psfpath`and `par.datapath` can be `numpy.ndarray` already loaded in the python code
+````
+par.psfpath = mypsf #numpy.ndarray
+par.datapath = mydata #numpy.ndarray
+````
+
+### Deconvolving in a terminal
+The main function `deconvolve` can be called as a command-line with arguments or via a bash file (see `main_example.sh` or `main_calibration.sh`) with the option -m.
+
+Two arguments are important if applied on your own data
 - `datapath`: Path to the data to deconvolve OR if ran through a python script it can be a ndarray itself
 - `psfpath`: Path to the point-spread function OR if ran through a python script it can be a ndarray itself
 
@@ -43,10 +71,11 @@ Currently supported file formats
 - `.czi`: Carl Zeiss files
 - `.tif`: Expected order of the dimension (Time, Views, Channels, Z, Y, X). Note that the file is first fully loaded, then the region of interest is kept for further processing. One drawback is that the RAM memory usage may be temporarily large.
 
-
 An example of calling the script with a command-line
 
-`python -m main_deconvolution.py --fres '../res/donuts' --gpu 0 --datapath '../data/real_donut/data.tif' --psfpath '../data/real_donut/psf.tif' --saveIter 10 10 10 10 10 --nviews 1 --methods 'RL' 'GARL' --Nepoch 50 --bufferwidth 20 10 10   --pxsz 79.4 79.4 1000 --bg 0 --psf_sz -1 -1 128 128 --roi 0 0 150 150 --config_GARL 'widefield_params'`
+```
+python -m pyxudeconv.deconvolution.deconvolve --fres '../res/donuts' --gpu 0 --datapath '../data/real_donut/data.tif' --psfpath '../data/real_donut/psf.tif' --saveIter 10 10 10 10 10 --nviews 1 --methods 'RL' 'GARL' --Nepoch 50 --bufferwidth 20 10 10   --pxsz 79.4 79.4 1000 --bg 0 --psf_sz -1 -1 128 128 --roi 0 0 150 150 --config_GARL 'widefield_params'
+```
 
 ## Note on dependencies
 
@@ -61,8 +90,31 @@ If Goujon accelerated Richardon-Lucy (GARL) and/or GPU will be used, please inst
 
 ## Goujon Accelerated Richardson-Lucy (GARL)
 
-To use GARL, call `python main_deconvolution.py` with the argument `--methods 'GARL'`.
-To run over different hyperparameters, you can create your own configuration file `your_config_file.py` in the folder `deconvolution/methods/configs/GARL/` and add the argument `--config_GARL 'your_config_file'`
+To use GARL, call `python -m pyxudeconv.deconvolution.deconvolve` with the argument `--methods 'GARL'`.
+To run over different hyperparameters, you can add the argument `--config_GARL 'full_path/your_config_file.json'`.
+
+Note: Each parameter must be a list of values, even if it is a single-valued list.
+For instance, here is an example of a `.json` config file
+````
+{
+    "WCRnet": ["pyxudeconv/trained_models/3Dtubes/"],
+    "epochoi": [40180],
+    "lmbd": [0.1, 0.5],
+    "sigWC": [0.1, 0.5]
+}
+````
+
+Alternatively, one can set a range of values for a parameter (e.g., `lmbd`) as follows
+````
+{
+    "WCRnet": ["pyxudeconv/trained_models/3Dtubes/"],
+    "epochoi": [40180],
+    "lmbd_min": 0.1,
+    "lmbd_max": 0.5,
+    "lmbd_nsteps": 2,
+    "sigWC": [0.1, 0.5]
+}
+````
 
 ## Simulation
 

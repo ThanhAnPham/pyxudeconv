@@ -6,7 +6,7 @@ def widefield_params():
         #epochoi = par.WCchkpts #40180
     params = dict()
     params['WCRnet'] = [
-        '../trained_models/3Dtubes/'
+        'pyxudeconv/trained_models/3Dtubes/'
     ]
     params['epochoi'] = [40180]
     params['lmbd'] = [0.1,0.5]  #np.arange(0.6, 2.1, 0.2)

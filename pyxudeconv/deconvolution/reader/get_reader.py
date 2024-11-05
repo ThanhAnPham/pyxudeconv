@@ -14,7 +14,7 @@ def get_reader(fpath):
     '''
     if isinstance(fpath, str):
         f_extension = fpath[fpath.rfind('.') + 1:]
-        if os.path.exists(f'./reader/read_{f_extension}.py'):
+        if os.path.exists(f'pyxudeconv/deconvolution/reader/read_{f_extension}.py'):
             module_read = importlib.import_module(f'reader.read_{f_extension}')
             read_file = getattr(module_read, f'read_{f_extension}')
             return read_file

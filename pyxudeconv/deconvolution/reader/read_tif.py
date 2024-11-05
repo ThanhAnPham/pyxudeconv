@@ -46,9 +46,9 @@ def read_tif(
 
         roi = np.array(roi)
 
-        if np.any(roi[2:]) is None or np.any(roi[2:] <= 0):
+        if np.any(roi[2:]==None) or np.any(roi[2:] <= 0):
             roi = np.array((0, 0, *data.shape[-2:]))
-        elif np.any(roi[:2]) is None or np.any(roi[:2] < 0):
+        elif np.any(roi[:2]==None) or np.any(roi[:2] < 0):
             # No negative indices
             roi[0] = np.maximum(data.shape[-2] // 2 - roi[2] // 2, 0)
             roi[1] = np.maximum(data.shape[-1] // 2 - roi[3] // 2, 0)

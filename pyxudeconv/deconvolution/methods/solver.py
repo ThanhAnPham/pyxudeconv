@@ -5,7 +5,6 @@ import pyxu.abc as pxa
 import pyxu.info.ptype as pxt
 import pyxu.info.warning as pxw
 import pyxu.operator as pxo
-import pyxu.runtime as pxrt
 import pyxu.util as pxu
 
 __all__ = ["RL", "RRL"]
@@ -62,7 +61,6 @@ class RL(pxa.Solver):
         print(f'Min value in HT1 for RL {self._Ht1.min()}')
         print(f'Set constraint for RL [{self._bg},{self._ub}]')
 
-    @pxrt.enforce_precision(i=("x0"))
     def m_init(
         self,
         x0: pxt.NDArray,
@@ -73,10 +71,10 @@ class RL(pxa.Solver):
 
         if acceleration:
             mst["acc"] = True
-            mst["tk"] = pxrt.coerce(1)
+            mst["tk"] = 1
         else:
             mst["acc"] = False
-            mst["a"] = itertools.repeat(pxrt.coerce(0))
+            mst["a"] = itertools.repeat(0)
 
     def m_step(self):
         mst = self._mstate  # shorthand
@@ -182,7 +180,6 @@ class RRL(pxa.Solver):
         print(f'Min value in HT1 for RRL {self._Ht1.min()}')
         print(f'Set constraint for RRL [{self._bg},{self._ub}]')
 
-    @pxrt.enforce_precision(i=("x0"))
     def m_init(
         self,
         x0: pxt.NDArray,
@@ -193,10 +190,10 @@ class RRL(pxa.Solver):
 
         if acceleration:
             mst["acc"] = True
-            mst["tk"] = pxrt.coerce(1)
+            mst["tk"] = 1
         else:
             mst["acc"] = False
-            mst["a"] = itertools.repeat(pxrt.coerce(0))
+            mst["a"] = itertools.repeat(0)
 
     def m_step(self):
         mst = self._mstate  # shorthand

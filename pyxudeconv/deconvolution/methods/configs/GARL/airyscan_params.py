@@ -4,7 +4,7 @@ import numpy as numpy
 def airyscan_params():
     params = dict()
     params['WCRnet'] = [
-        '../trained_models/3Dtubes/'
+        'pyxudeconv/trained_models/3Dtubes/'
     ]
     params['epochoi'] = [40180]
     params['lmbd'] = [0.5, 1, 2]  #np.arange(0.6, 2.1, 0.2),

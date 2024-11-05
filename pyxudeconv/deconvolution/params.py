@@ -3,7 +3,7 @@ import numpy as np
 import json
 
 
-def get_param():
+def get_param(param_file=None):
     '''Get parameters for deconvolution'''
     parser = ArgumentParser(
         description='Deconvolution parameters',
@@ -175,9 +175,15 @@ def get_param():
     )
 
     par = parser.parse_args()
-    if par.param_file is not None and par.param_file != '':
-        print(f'Loading param file {par.param_file}')
-        with open(par.param_file, 'r', encoding="utf-8") as f:
+    if param_file is not None and param_file!='':
+        cpfile = param_file
+    elif par.param_file is not None and par.param_file != '':
+        cpfile = par.param_file
+    else:
+        cpfile = None
+    if cpfile is not None:
+        print(f'Loading param file {cpfile}')
+        with open(cpfile, 'r', encoding="utf-8") as f:
             par.__dict__ = json.load(f)
     if par.coi_psf is None:
         par.coi_psf = par.coi

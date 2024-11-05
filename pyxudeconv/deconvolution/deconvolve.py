@@ -16,23 +16,23 @@ from .utils import convert2save
 import forward.convolution as forw
 
 import pyxu.opt.stop as pxst
-import pyxu.runtime as pxrt
+#import pyxu.runtime as pxrt
 
-import params
+from .params import get_param
 
 sys.path.append('../')
 
 
-def deconvolve():
+def deconvolve(par=None):
     '''
     Deconvolution methods.
     '''
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
 
-    pxrt._setPrecision(pxrt.Width.SINGLE)
-
-    par = params.get_param()
+    #pxrt._setPrecision(pxrt.Width.SINGLE)
+    if par is None:
+        par = get_param()
 
     if par.gpu >= 0:
         ordi = platform.system()
@@ -64,7 +64,7 @@ def deconvolve():
     # 1. Load phantom (if provided), measurements and create physical model from PSF data
     if par.phantom is not None:
         #Metrics
-        from utils import rsnr as cmp_metrics
+        from deconvolution.utils import rsnr as cmp_metrics
         read_phantom = get_reader(par.phantom)
         phantom = xp.array(read_phantom(par.phantom))
         phantom_name = par.phantom[par.phantom.rfind('/') + 1:par.phantom.
@@ -98,7 +98,8 @@ def deconvolve():
 
     with open(par.fres + '/params.json', 'w', encoding="utf-8") as f:
         cpar = par
-        cpar.psf_sz = cpar.psf_sz.tolist()
+        cpar.psf_sz = cpar.psf_sz if isinstance(
+            cpar.psf_sz, list) else cpar.psf_sz.tolist()
         json.dump(cpar.__dict__, f, indent=2)
 
     fh = logging.FileHandler(f'{par.fres}/run.log', mode='w')
@@ -212,7 +213,8 @@ def deconvolve():
         logger.info(f'Doing hyper-parameters optimization for {method}')
 
         bestrecon, bestparams, bestmetric = cmeth.optimize_hyperparams(
-            x0, par.saveIter[np.minimum(meth_iter, len(par.saveIter))], logger)
+            x0, par.saveIter[np.minimum(meth_iter,
+                                        len(par.saveIter) - 1)], logger)
         if par.phantom is None:
             cimstit = f'{method}'
         else:
@@ -260,6 +262,7 @@ def deconvolve():
 
     plt.savefig(f'{par.fres}/res_{fid}.png', dpi=500, bbox_inches='tight')
     logger.info('Deconvolution finished')
+    return ims
 
 
 if __name__ == '__main__':

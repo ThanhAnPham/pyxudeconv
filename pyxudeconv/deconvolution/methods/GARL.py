@@ -6,7 +6,7 @@ import numpy as np
 from pyxu.operator import KLDivergence
 import sys, os, glob
 
-sys.path.append('../mywc/')
+#sys.path.append('../mywc/')
 
 import pyxu.abc as pxa
 import pyxu.info.ptype as pxt
@@ -14,7 +14,7 @@ import torch
 from pyxu.operator.interop import from_source
 from pyxu.operator.interop import torch as pxotorch
 
-from models.wc_conv_net import WCvxConvNet, WCvxConvNet3DS, WCvxConvNet3D
+from methods.models_GARL.wc_conv_net import WCvxConvNet, WCvxConvNet3DS, WCvxConvNet3D
 from pathlib import Path
 import json
 
@@ -24,7 +24,7 @@ from methods.solver import RRL
 from .ABC import HyperParametersDeconvolutionOptimizer
 import importlib
 
-sys.path.append('./methods/configs/GARL')
+#sys.path.append('./methods/configs/GARL')
 
 __all__ = [
     "GARL",
@@ -37,16 +37,30 @@ class GARL(HyperParametersDeconvolutionOptimizer):
     """
 
     def get_hyperparams(self):
-        module_config = importlib.import_module('methods.configs.GARL.' + self._param_method)
-        config_fct = getattr(module_config, self._param_method)
-        params = config_fct()
+        if '.json' in self._param_method[self._param_method.rfind('.'):]:
+            with open(self._param_method, 'r', encoding="utf-8") as f:
+                params = json.load(f)
+            
+            new_params = params.copy()
+            for k in params.keys():
+                if 'min' in k:
+                    cp = k[:k.rfind('_min')]
+                    new_params[cp] = np.linspace(params[cp+'_min'],params[cp+'_max'],params[cp+'_nsteps'])
+                    new_params.pop(cp+'_min')
+                    new_params.pop(cp+'_max')
+                    new_params.pop(cp+'_nsteps')
+            params = new_params.copy()
+        else: #Load some default configurations in the package
+            module_config = importlib.import_module('methods.configs.GARL.' +
+                                                    self._param_method)
+            config_fct = getattr(module_config, self._param_method)
+            params = config_fct()
         return params
 
     def init_solver(self, param):
         device = torch.device(self._device_name)
         lossRL = KLDivergence(self._g)
         reg_shape = self._trim_buffer.codim_shape  #chooses where the regularization is enforced
-
         NN, applyNN, gradNN, proxNN = load_model_weakly_convex(
             param['WCRnet'],
             sigma=torch.tensor(param['sigWC'], dtype=torch.float32).to(device),
@@ -57,13 +71,13 @@ class GARL(HyperParametersDeconvolutionOptimizer):
         )
         NN.to(device)
         NN.conv_layer.spectral_norm(mode="power_method", n_steps=200)
-        R = pxotorch.from_torch(dim_shape=reg_shape,
-                                codim_shape=(1),
-                                apply=applyNN,
-                                cls=pxa.ProxDiffFunc,
-                                name=param['WCRnet'],
-                                grad=gradNN,
-                                prox=None)
+        R = pxotorch.from_torch(
+            dim_shape=reg_shape,
+            codim_shape=(1),
+            apply=applyNN,
+            cls=pxa.ProxDiffFunc,
+            grad=gradNN,
+            prox=None)
         R.lipschitz = NN.get_mu().maximum(
             torch.tensor(1)).detach().cpu().numpy()
 
@@ -89,17 +103,7 @@ def load_model_weakly_convex(
     doSplineActivation=True,
     #current_directory=None,
 ):
-    # folder
-    #if current_directory is None:
-    #    current_directory = Path(os.path.dirname(
-    #        os.path.abspath(__file__))).parent.parent.absolute()
-    #directory = f'{current_directory}/trained_models/{name}/'
     directory_checkpoints = f'{name}checkpoints/'
-
-    #rep = {"[": "[[]", "]": "[]]"}
-
-    #name_glob = name.replace("[", "tr1u").replace("]", "tr2u").replace(
-    #    "tr1u", "[[]").replace("tr2u", "[]]")
 
     # retrieve last checkpoint
     if epoch is None:
@@ -136,6 +140,7 @@ def load_model_weakly_convex(
         import numpy as xp
 
     def arrange(arr: pxt.NDArray) -> pxt.NDArray:
+        arr = arr.to(torch.float32)
         if do3D:
             if arr.ndim == 2:
                 arr = arr.unsqueeze(0).unsqueeze(0).unsqueeze(
