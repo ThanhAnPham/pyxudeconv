@@ -3,7 +3,7 @@ import numpy as numpy
 
 def airyscan_params():
     params = dict()
-    params['WCRnet'] = [
+    params['model'] = [
         'pyxudeconv/trained_models/3Dtubes/'
     ]
     params['epochoi'] = [40180]

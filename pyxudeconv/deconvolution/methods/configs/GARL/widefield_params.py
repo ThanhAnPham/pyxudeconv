@@ -5,7 +5,7 @@ def widefield_params():
     #nameCRR = par.WCnet #'3Dkern333/3DWCRR-CNN'#'WCRR-CNN'#'confWCRR-CNN' #'confWCRR-CNN-one-scale' #'Sigma_25_t_5' #'WCRR-CNN' #CRR_CNN #confWCRR-CNN
         #epochoi = par.WCchkpts #40180
     params = dict()
-    params['WCRnet'] = [
+    params['model'] = [
         'pyxudeconv/trained_models/3Dtubes/'
     ]
     params['epochoi'] = [40180]
