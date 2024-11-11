@@ -50,6 +50,8 @@ def getModel(
     if normalize_meas:
         gnormalizer = g.max(axis=axoi, keepdims=True)  # (0,-3,-2,-1)
         g /= gnormalizer
+    else:
+        gnormalizer = 1.
     psf = psf.squeeze()
     g = np.maximum(g.squeeze(), 0)
 
@@ -116,4 +118,4 @@ def getModel(
         for ccoi in coi:
             fid = '{}_{:d}'.format(fid, ccoi)
 
-    return forw, g, trim_buffer, op4metrics, phantom, fid, psf
+    return forw, g, trim_buffer, op4metrics, phantom, fid, psf, gnormalizer
