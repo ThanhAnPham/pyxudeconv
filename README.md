@@ -38,7 +38,7 @@ After the package import, the deconvolution is performed by the function `deconv
   - Load the default parameters via `get_param` and modify each field of interest
     ````
     import pyxudeconv
-    par = pyxudeconv.get_param(param_file='./params.json')
+    par = pyxudeconv.get_param()
     par.psfpath = '/home/tampham/3DWCR/data/simulated/psf_sample_calib_nv_32_coi_2.ome.tif'
     par.datapath = '/home/tampham/3DWCR/data/simulated/g_sample_calib_nv_32_coi_2.ome.tif'
     par.phantom = '/home/tampham/3DWCR/data/simulated/phantom_sample_calib_nv_32_coi_2.ome.tif'
