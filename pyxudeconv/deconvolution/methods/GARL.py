@@ -63,7 +63,7 @@ class GARL(HyperParametersDeconvolutionOptimizer):
         reg_shape = self._trim_buffer.codim_shape  #chooses where the regularization is enforced
         NN, applyNN, gradNN, proxNN = load_model_weakly_convex(
             param['model'],
-            sigma=torch.tensor(param['sigWC'], dtype=torch.float32).to(device),
+            sigma=torch.tensor(param['sigma'], dtype=torch.float32).to(device),
             device=self._device_name,
             epoch=param['epochoi'],
             do3D=True,

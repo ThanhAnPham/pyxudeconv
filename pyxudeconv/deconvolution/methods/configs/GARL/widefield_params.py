@@ -10,5 +10,5 @@ def widefield_params():
     ]
     params['epochoi'] = [40180]
     params['lmbd'] = [0.1,0.5]  #np.arange(0.6, 2.1, 0.2)
-    params['sigWC'] = [0.1,0.5]  #np.arange(0.1, 2.1, 0.2)
+    params['sigma'] = [0.1,0.5]  #np.arange(0.1, 2.1, 0.2)
     return params
