@@ -83,9 +83,9 @@ def deconvolve(par=None):
         par.psfpath, par.datapath, par.psf_sz, par.nviews, par.coi_psf,
         par.roi, par.coi, par.bufferwidth, phantom, fid, xp, read_psf,
         read_data, par.normalize_meas)
-    
-    op4save = HomothetyOp(trim_buffer.codim_shape,gnormalizer)*trim_buffer
-    
+
+    op4save = HomothetyOp(trim_buffer.codim_shape, gnormalizer) * trim_buffer
+
     if par.phantom is not None:
         print('Phantom taken from ' + par.phantom)
         print(f'Min/Max phantom {phantom.min():.4f}/{phantom.max():.4f}')
@@ -121,7 +121,7 @@ def deconvolve(par=None):
     x0_metric = cmp_metrics(phantom, op4metrics(x0))
 
     if par.saveMeas:
-        g2save = convert2save(g*gnormalizer)
+        g2save = convert2save(g * gnormalizer)
         tifffile.imwrite(
             f'{par.fres}/g_{fid}.ome.tif',
             g2save,
@@ -184,7 +184,7 @@ def deconvolve(par=None):
     if phantom is not None:
         ims.append(phantom.copy().get() if on_gpu else phantom.copy())
         imstit = ['GT']
-    ims.append(gnormalizer*(g.copy().get() if on_gpu else g.copy()))
+    ims.append(gnormalizer * (g.copy().get() if on_gpu else g.copy()))
     imstit.append('Meas')
     dpar = vars(par)
     for meth_iter, method in enumerate(par.methods):
