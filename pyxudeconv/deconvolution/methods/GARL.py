@@ -40,17 +40,27 @@ class GARL(HyperParametersDeconvolutionOptimizer):
         if '.json' in self._param_method[self._param_method.rfind('.'):]:
             with open(self._param_method, 'r', encoding="utf-8") as f:
                 params = json.load(f)
-            
+
             new_params = params.copy()
             for k in params.keys():
                 if 'min' in k:
                     cp = k[:k.rfind('_min')]
-                    new_params[cp] = np.linspace(params[cp+'_min'],params[cp+'_max'],params[cp+'_nsteps'])
-                    new_params.pop(cp+'_min')
-                    new_params.pop(cp+'_max')
-                    new_params.pop(cp+'_nsteps')
+                    new_params[cp] = np.linspace(params[cp + '_min'],
+                                                 params[cp + '_max'],
+                                                 params[cp + '_nsteps'])
+                    new_params.pop(cp + '_min')
+                    new_params.pop(cp + '_max')
+                    new_params.pop(cp + '_nsteps')
             params = new_params.copy()
-        else: #Load some default configurations in the package
+        elif isinstance(self._param_method, dict):
+            #Parameters are directly provided as a dictionary (possible if deconvolve is called from Python)
+            params = self._param_method
+        else:
+            if not isinstance(self._param_method, str):
+                #Load some default configurations in the package
+                self._param_method = 'widefield_params' if len(
+                    self._forw.codim_shape) == len(
+                        self._forw.dim_shape) else 'airyscan_params'
             module_config = importlib.import_module('methods.configs.GARL.' +
                                                     self._param_method)
             config_fct = getattr(module_config, self._param_method)
@@ -71,13 +81,12 @@ class GARL(HyperParametersDeconvolutionOptimizer):
         )
         NN.to(device)
         NN.conv_layer.spectral_norm(mode="power_method", n_steps=200)
-        R = pxotorch.from_torch(
-            dim_shape=reg_shape,
-            codim_shape=(1),
-            apply=applyNN,
-            cls=pxa.ProxDiffFunc,
-            grad=gradNN,
-            prox=None)
+        R = pxotorch.from_torch(dim_shape=reg_shape,
+                                codim_shape=(1),
+                                apply=applyNN,
+                                cls=pxa.ProxDiffFunc,
+                                grad=gradNN,
+                                prox=None)
         R.lipschitz = NN.get_mu().maximum(
             torch.tensor(1)).detach().cpu().numpy()
 

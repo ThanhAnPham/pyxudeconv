@@ -186,7 +186,8 @@ def deconvolve(par=None):
         imstit = ['GT']
     ims.append(gnormalizer * (g.copy().get() if on_gpu else g.copy()))
     imstit.append('Meas')
-    dpar = vars(par)
+    if not isinstance(par,dict):
+        dpar = vars(par)
     for meth_iter, method in enumerate(par.methods):
         module_class = importlib.import_module(f'methods.{method}')
         classmeth = getattr(module_class, method)
