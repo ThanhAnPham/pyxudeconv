@@ -33,6 +33,7 @@ class HyperParametersOptimizer(ABC):
         op4metrics,
         fct4name,
         op4save,
+        save_results,
         pxsz=1,
         pxunit='N/A',
         **kwargs,
@@ -43,6 +44,7 @@ class HyperParametersOptimizer(ABC):
         self.op4metrics = op4metrics
         self.fct4name = fct4name
         self.op4save = op4save
+        self._save_results = save_results
         self._pxunit = pxunit
         self._pxsz = pxsz
 
@@ -127,20 +129,11 @@ class HyperParametersOptimizer(ABC):
 
     def save_results(self, recon, fname):
         '''
-        Save results as tiff file
+        Save results as tiff file by default or do whatever self.
         '''
-        tifffile.imwrite(
-            fname,
-            self.op4save(recon).get()
-            if pxd.CUPY_ENABLED else self.op4save(recon),
-            imagej=True,
-            resolution=(1 / self._pxsz[0], 1 / self._pxsz[1]),
-            metadata={
-                'axes': 'ZYX',
-                'spacing': self._pxsz[2],
-                'unit': self._pxunit
-            },
-        )
+        
+        self._save_results(self.op4save(recon).get()
+            if pxd.CUPY_ENABLED else self.op4save(recon),fname,self._pxsz,self._pxunit)
 
 
 class HyperParametersDeconvolutionOptimizer(HyperParametersOptimizer):

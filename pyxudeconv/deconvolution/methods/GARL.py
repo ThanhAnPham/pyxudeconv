@@ -45,9 +45,11 @@ class GARL(HyperParametersDeconvolutionOptimizer):
             for k in params.keys():
                 if 'min' in k:
                     cp = k[:k.rfind('_min')]
-                    new_params[cp] = np.linspace(params[cp + '_min'],
-                                                 params[cp + '_max'],
-                                                 params[cp + '_nsteps'])
+                    new_params[cp] = np.linspace(
+                        params[cp + '_min'],
+                        params[cp + '_max'],
+                        params[cp + '_nsteps'],
+                    )
                     new_params.pop(cp + '_min')
                     new_params.pop(cp + '_max')
                     new_params.pop(cp + '_nsteps')

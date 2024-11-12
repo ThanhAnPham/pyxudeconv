@@ -56,10 +56,34 @@ def deconvolve(par=None):
     seed = 0
     xp.random.seed(seed)
 
-    # 0. Define the read function for data and psf by checking the file extension
+    if hasattr(par, 'save_results'):
+        save_results = par.save_results
+    else:
+        def save_results(vol, fname, pxsz, unit):
+            if vol.ndim == 3:
+                axes = 'ZYX'
+            else:
+                axes = 'TZCYX'
+            if '.ome.tif' in fname:
+                full_fname = fname
+            else:
+                full_fname = f'{fname}.ome.tif'
+            tifffile.imwrite(
+                full_fname,
+                vol,
+                imagej=True,
+                resolution=(1 / pxsz[0], 1 / pxsz[1]),
+                metadata={
+                    'axes': axes,
+                    'spacing': pxsz[2],
+                    'unit': unit
+                },
+            )
+
+    # Define the read function for data and psf by checking the file extension
     read_data = get_reader(par.datapath)
     read_psf = get_reader(par.psfpath)
-    # 1. Load phantom (if provided), measurements and create physical model from PSF data
+    # Load phantom (if provided), measurements and create physical model from PSF data
     if par.phantom is not None:
         #Metrics
         from deconvolution.utils import rsnr as cmp_metrics
@@ -120,70 +144,36 @@ def deconvolve(par=None):
 
     if par.saveMeas:
         g2save = convert2save(g * gnormalizer)
-        tifffile.imwrite(
-            f'{par.fres}/g_{fid}.ome.tif',
-            g2save,
-            imagej=True,
-            resolution=(1 / pxsz[0], 1 / pxsz[1]),
-            metadata={
-                'axes': 'TZCYX',
-                'spacing': pxsz[2],
-                'unit': par.pxunit
-            },
-        )
+        save_results(g2save, f'{par.fres}/g_{fid}',pxsz,par.pxunit)
         psf2save = convert2save(psf if psf.ndim ==
                                 5 else xp.expand_dims(psf, 1))
-        tifffile.imwrite(
-            f'{par.fres}/psf_{fid}.ome.tif',
-            psf2save,
-            imagej=True,
-            resolution=(1 / pxsz[0], 1 / pxsz[1]),
-            metadata={
-                'axes': 'TZCYX',
-                'spacing': pxsz[2],
-                'unit': par.pxunit
-            },
-        )
+        save_results(psf2save, f'{par.fres}/psf_{fid}',pxsz,par.pxunit)
 
     if par.phantom is not None:
-        tifffile.imwrite(f'{par.fres}/xgt_{fid}.ome.tif',
-                         phantom.get() if on_gpu else phantom,
-                         imagej=True,
-                         resolution=(1 / pxsz[0], 1 / pxsz[1]),
-                         metadata={
-                             'axes': 'ZYX',
-                             'spacing': pxsz[2],
-                             'unit': par.pxunit
-                         })
-
-    def create_fname(
-        meth,
-        paramstr,
-        metric=-np.inf,
-    ):
-        if np.isinf(metric) and metric < 0:
-            return f'{par.fres}/{meth}_{fid}_{paramstr}.ome.tif'
-        else:
-            return f'{par.fres}/{meth}_{fid}_{paramstr}_{metric:.4e}.ome.tif'
-
-    tifffile.imwrite(create_fname('x0', '', x0_metric),
-                     trim_buffer(x0).get() if on_gpu else x0,
-                     imagej=True,
-                     resolution=(1 / pxsz[0], 1 / pxsz[1]),
-                     metadata={
-                         'axes': 'ZYX',
-                         'spacing': pxsz[2],
-                         'unit': par.pxunit
-                     })
-
+        save_results(phantom.get() if on_gpu else phantom, f'{par.fres}/xgt_{fid}',pxsz,par.pxunit)
+    if hasattr(par, 'create_fname'):
+        create_fname = par.create_fname
+    else:
+        def create_fname(
+            meth,
+            paramstr,
+            metric=-np.inf,
+        ):
+            if np.isinf(metric) and metric < 0:
+                return f'{par.fres}/{meth}_{fid}_{paramstr}.ome.tif'
+            else:
+                return f'{par.fres}/{meth}_{fid}_{paramstr}_{metric:.4e}.ome.tif'
+    save_results(trim_buffer(x0).get() if on_gpu else x0, create_fname('x0', '', x0_metric),pxsz,par.pxunit)
+    
     stop_crit = pxst.MaxIter(par.Nepoch)
     ims = []
     imstit = []
     if phantom is not None:
         ims.append(phantom.copy().get() if on_gpu else phantom.copy())
         imstit = ['GT']
-    
-    ims.append((gnormalizer*g).copy().get() if on_gpu else gnormalizer * g.copy())
+
+    ims.append((gnormalizer * g).copy().get() if on_gpu else gnormalizer *
+               g.copy())
     imstit.append('Meas')
     if not isinstance(par, dict):
         dpar = vars(par)
@@ -209,6 +199,7 @@ def deconvolve(par=None):
             op4metrics,
             create_fname,
             op4save,
+            save_results,
             pxsz=pxsz,
             pxunit=par.pxunit,
         )
