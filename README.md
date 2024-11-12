@@ -81,9 +81,9 @@ python -m pyxudeconv.deconvolve --fres '../res/donuts' --gpu 0 --datapath '../da
 
 If Goujon accelerated Richardon-Lucy (GARL) and/or GPU will be used, please install `torch`[^1] according to your case. For instance, If the GPU CUDA version is 12.1, the conda environment can be created in a terminal with the commands
 
-- `conda create -n pyxudeconv python=3.11 pytorch=2.4.1 pytorch-cuda=12.1 tifffile numpy scipy matplotlib cupy -c pytorch -c nvidia -c conda-forge` 
+- `conda create -n pyxudeconv python=3.11 pytorch=2.4.1 pytorch-cuda=12.1 tifffile numpy scipy matplotlib -c pytorch -c nvidia -c conda-forge` 
 - `conda activate pyxudeconv`
-- `pip install pyxu`
+- `pip install pyxu[complete]`
 <!--- `pip install git+https://github.com/pyxu-org/pyxu.git@feature/fast_fftconvolve pylibCZIrw`) --->
 
 [^1]:21/10/2024, there might be an incompatiblity with the `sympy(==1.13.1)` package version required by `pytorch >= 2.5.0`. Either downgrade `sympy` to `1.13.1` (but may create incompatibilities with `pyxu`) or install `pytorch=2.4.1`.
