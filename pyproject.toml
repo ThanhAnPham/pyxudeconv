@@ -24,16 +24,23 @@ dependencies = [
     "numpy",
     "scipy",
     "matplotlib",
-    "pyxu[complete-cpu]"
+    "pyxu"
 ]
 
 [project.optional-dependencies]
-gpu = [
+gpu11 = [
+    "torch>=2.4.1",
+    "pytorch-cuda>=11.1",
+    "cupy",
+    "pyxu[complete11]"
+]
+gpu12 = [
     "torch>=2.4.1",
     "pytorch-cuda>=12.1",
     "cupy",
     "pyxu[complete]"
 ]
+
 testing = [
     "tox",
     "pytest",  # https://docs.pytest.org/en/latest/contents.html
