@@ -24,7 +24,7 @@ dependencies = [
     "numpy",
     "scipy",
     "matplotlib",
-    "pyxu"
+    "pyxu[complete-cpu]"
 ]
 
 [project.optional-dependencies]
@@ -32,6 +32,7 @@ gpu = [
     "torch>=2.4.1",
     "pytorch-cuda>=12.1",
     "cupy",
+    "pyxu[complete]"
 ]
 testing = [
     "tox",
