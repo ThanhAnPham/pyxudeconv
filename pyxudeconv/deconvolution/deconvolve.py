@@ -17,8 +17,6 @@ import forward.convolution as forw
 
 import pyxu.opt.stop as pxst
 
-from pyxu.operator import HomothetyOp
-
 from .params import get_param
 
 sys.path.append('../')
@@ -84,7 +82,7 @@ def deconvolve(par=None):
         par.roi, par.coi, par.bufferwidth, phantom, fid, xp, read_psf,
         read_data, par.normalize_meas)
 
-    op4save = HomothetyOp(trim_buffer.codim_shape, gnormalizer) * trim_buffer
+    op4save = gnormalizer * trim_buffer
 
     if par.phantom is not None:
         print('Phantom taken from ' + par.phantom)
@@ -184,9 +182,10 @@ def deconvolve(par=None):
     if phantom is not None:
         ims.append(phantom.copy().get() if on_gpu else phantom.copy())
         imstit = ['GT']
-    ims.append(gnormalizer * (g.copy().get() if on_gpu else g.copy()))
+    
+    ims.append((gnormalizer*g).copy().get() if on_gpu else gnormalizer * g.copy())
     imstit.append('Meas')
-    if not isinstance(par,dict):
+    if not isinstance(par, dict):
         dpar = vars(par)
     for meth_iter, method in enumerate(par.methods):
         module_class = importlib.import_module(f'methods.{method}')

@@ -50,8 +50,9 @@ def getModel(
     if normalize_meas:
         gnormalizer = g.max(axis=axoi, keepdims=True)  # (0,-3,-2,-1)
         g /= gnormalizer
+        gnormalizer = gnormalizer.squeeze()
     else:
-        gnormalizer = 1.
+        gnormalizer = xp.ones(1)
     psf = psf.squeeze()
     g = np.maximum(g.squeeze(), 0)
 
