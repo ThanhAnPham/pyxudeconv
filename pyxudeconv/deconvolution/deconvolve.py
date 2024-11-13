@@ -117,17 +117,19 @@ def deconvolve(par=None):
 
     pxsz = np.array(par.pxsz)
 
-    if not os.path.exists(par.fres):
-        os.makedirs(par.fres)
+    if par.fres:
+        if not os.path.exists(par.fres):
+            os.makedirs(par.fres)
+        with open(par.fres + '/params.json', 'w', encoding="utf-8") as f:
+            cpar = par
+            cpar.psf_sz = cpar.psf_sz if isinstance(
+                cpar.psf_sz, list) else list(cpar.psf_sz)
+            json.dump(cpar.__dict__, f, indent=2)
 
-    with open(par.fres + '/params.json', 'w', encoding="utf-8") as f:
-        cpar = par
-        cpar.psf_sz = cpar.psf_sz if isinstance(
-            cpar.psf_sz, list) else cpar.psf_sz.tolist()
-        json.dump(cpar.__dict__, f, indent=2)
-
-    fh = logging.FileHandler(f'{par.fres}/run.log', mode='w')
-    fh.setLevel(logging.INFO)  # or any desired level
+    if par.fres:
+        fh = logging.FileHandler(f'{par.fres}/run.log', mode='w')
+    else:
+        fh = logging.NullHandler()
     logger.addHandler(fh)
     x0 = forw_model.adjoint(g)
     if par.bg is None or par.bg < 0:
@@ -149,7 +151,7 @@ def deconvolve(par=None):
                                 5 else xp.expand_dims(psf, 1))
         save_results(psf2save, f'{par.fres}/psf_{fid}',pxsz,par.pxunit)
 
-    if par.phantom is not None:
+    if par.phantom is not None and par.saveMeas:
         save_results(phantom.get() if on_gpu else phantom, f'{par.fres}/xgt_{fid}',pxsz,par.pxunit)
     if hasattr(par, 'create_fname'):
         create_fname = par.create_fname
@@ -163,7 +165,8 @@ def deconvolve(par=None):
                 return f'{par.fres}/{meth}_{fid}_{paramstr}.ome.tif'
             else:
                 return f'{par.fres}/{meth}_{fid}_{paramstr}_{metric:.4e}.ome.tif'
-    save_results(trim_buffer(x0).get() if on_gpu else x0, create_fname('x0', '', x0_metric),pxsz,par.pxunit)
+    if par.saveMeas:
+        save_results(trim_buffer(x0).get() if on_gpu else x0, create_fname('x0', '', x0_metric),pxsz,par.pxunit)
     
     stop_crit = pxst.MaxIter(par.Nepoch)
     ims = []
@@ -175,8 +178,11 @@ def deconvolve(par=None):
     ims.append((gnormalizer * g).copy().get() if on_gpu else gnormalizer *
                g.copy())
     imstit.append('Meas')
-    if not isinstance(par, dict):
-        dpar = vars(par)
+    
+    if par.disp == 0:
+        par.disp = 1e9
+    
+    dpar = vars(par)
     for meth_iter, method in enumerate(par.methods):
         module_class = importlib.import_module(f'methods.{method}')
         classmeth = getattr(module_class, method)
@@ -185,6 +191,7 @@ def deconvolve(par=None):
             cdpar = dpar[cconfig]
         else:
             cdpar = ''
+        print(f'YOINK? {method}', cdpar)
         cmeth = classmeth(
             forw_model,
             g,
@@ -240,20 +247,21 @@ def deconvolve(par=None):
 
     ims = [predisp(im) for im in ims]
 
-    nrow = 2
-    ncol = np.ceil(len(ims) / nrow).astype(int)
-    _, axs = plt.subplots(nrows=nrow, ncols=ncol)
+    if par.fres:
+        nrow = 2
+        ncol = np.ceil(len(ims) / nrow).astype(int)
+        _, axs = plt.subplots(nrows=nrow, ncols=ncol)
+        
+        for itera, ax in enumerate(axs.reshape(-1)):
+            if itera < len(ims):
+                plt.axes(ax)
+                plt.imshow(ims[itera])
+                plt.title(imstit[itera])
+                plt.axis('off')
 
-    for itera, ax in enumerate(axs.reshape(-1)):
-        if itera < len(ims):
-            plt.axes(ax)
-            plt.imshow(ims[itera])
-            plt.title(imstit[itera])
-            plt.axis('off')
+        plt.show()
 
-    plt.show()
-
-    plt.savefig(f'{par.fres}/res_{fid}.png', dpi=500, bbox_inches='tight')
+        plt.savefig(f'{par.fres}/res_{fid}.png', dpi=500, bbox_inches='tight')
     logger.info('Deconvolution finished')
     return ims
 

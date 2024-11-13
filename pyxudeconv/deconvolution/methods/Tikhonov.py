@@ -12,15 +12,17 @@ __all__ = [
     "Tikhonov",
 ]
 
-
 class Tikhonov(HyperParametersDeconvolutionOptimizer):
     r"""
     Hyper parameters optimizer for Tikhonov
     """
 
     def get_hyperparams(self):
-        params = dict()
-        params['tau'] = np.logspace(-3, 4, 3)#15)
+        if isinstance(self._param_method, dict):
+            params = self._param_method
+        else:
+            params = dict()
+            params['tau'] = np.logspace(-3, 4, 1)  #15)
         return params
 
     def init_solver(self, param):

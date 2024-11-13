@@ -131,7 +131,6 @@ class HyperParametersOptimizer(ABC):
         '''
         Save results as tiff file by default or do whatever self.
         '''
-        
         self._save_results(self.op4save(recon).get()
             if pxd.CUPY_ENABLED else self.op4save(recon),fname,self._pxsz,self._pxunit)
 

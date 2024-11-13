@@ -32,13 +32,11 @@ dependencies = [
 gpu11 = [
     "torch>=2.4.1",
     "pytorch-cuda>=11.1",
-    "cupy",
     "pyxu[complete11]"
 ]
 gpu12 = [
     "torch>=2.4.1",
     "pytorch-cuda>=12.1",
-    "cupy",
     "pyxu[complete]"
 ]
 
@@ -60,9 +58,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 include-package-data = true
-
-[tool.setuptools.packages.find]
-where = ["pyxudeconv","pyxudeconv/deconvolution"]
 
 [tool.setuptools.package-data]
 "*" = ["*.yaml"]
