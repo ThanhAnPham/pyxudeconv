@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 from abc import ABC, abstractmethod
-import methods.models_GARL.spline_autograd_func as spline_autograd_func
+import pyxudeconv.deconvolution.methods.models_GARL.spline_autograd_func as spline_autograd_func
 
 import time
 

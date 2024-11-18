@@ -4,9 +4,8 @@ import numpy as np
 #from libraries import *
 #import pyxu
 from pyxu.operator import KLDivergence
-import sys, os, glob
-
-#sys.path.append('../mywc/')
+import os
+import glob
 
 import pyxu.abc as pxa
 import pyxu.info.ptype as pxt
@@ -14,17 +13,19 @@ import torch
 from pyxu.operator.interop import from_source
 from pyxu.operator.interop import torch as pxotorch
 
-from methods.models_GARL.wc_conv_net import WCvxConvNet, WCvxConvNet3DS, WCvxConvNet3D
-from pathlib import Path
+from pyxudeconv.deconvolution.methods.models_GARL.wc_conv_net import WCvxConvNet, WCvxConvNet3DS, WCvxConvNet3D
 import json
 
-#in future release, RRL will be incorporated in Pyxu
-from methods.solver import RRL
+#in future release, RRL will be incorporated in Pyxu or at least as a plugin
+from pyxudeconv.deconvolution.methods.solver import RRL
 
 from .ABC import HyperParametersDeconvolutionOptimizer
 import importlib
 
-#sys.path.append('./methods/configs/GARL')
+import inspect
+
+parent_dir = os.path.dirname(
+    os.path.abspath(inspect.getfile(inspect.currentframe())))
 
 __all__ = [
     "GARL",
@@ -37,36 +38,48 @@ class GARL(HyperParametersDeconvolutionOptimizer):
     """
 
     def get_hyperparams(self):
-        if '.json' in self._param_method[self._param_method.rfind('.'):]:
-            with open(self._param_method, 'r', encoding="utf-8") as f:
-                params = json.load(f)
-
-            new_params = params.copy()
-            for k in params.keys():
-                if 'min' in k:
-                    cp = k[:k.rfind('_min')]
-                    new_params[cp] = np.linspace(
-                        params[cp + '_min'],
-                        params[cp + '_max'],
-                        params[cp + '_nsteps'],
-                    )
-                    new_params.pop(cp + '_min')
-                    new_params.pop(cp + '_max')
-                    new_params.pop(cp + '_nsteps')
-            params = new_params.copy()
-        elif isinstance(self._param_method, dict):
+        if isinstance(self._param_method, dict):
             #Parameters are directly provided as a dictionary (possible if deconvolve is called from Python)
-            params = self._param_method
-        else:
-            if not isinstance(self._param_method, str):
-                #Load some default configurations in the package
-                self._param_method = 'widefield_params' if len(
+            if self._param_method['model'][0]=='':
+                #load trained model in package if 'model' empty string ''
+                curr_modality = 'widefield_params' if len(
                     self._forw.codim_shape) == len(
                         self._forw.dim_shape) else 'airyscan_params'
-            module_config = importlib.import_module('methods.configs.GARL.' +
-                                                    self._param_method)
-            config_fct = getattr(module_config, self._param_method)
-            params = config_fct()
+                module_config = importlib.import_module(
+                    'pyxudeconv.deconvolution.methods.configs.GARL.' +
+                    curr_modality)
+                config_fct = getattr(module_config, curr_modality)
+                subparams = config_fct()
+                self._param_method['model'] = subparams['model']
+            return self._param_method
+        if isinstance(self._param_method, str):
+            if '.json' in self._param_method[self._param_method.rfind('.'):]:
+                with open(self._param_method, 'r', encoding="utf-8") as f:
+                    params = json.load(f)
+
+                new_params = params.copy()
+                for k in params.keys():
+                    if 'min' in k:
+                        cp = k[:k.rfind('_min')]
+                        new_params[cp] = np.linspace(
+                            params[cp + '_min'],
+                            params[cp + '_max'],
+                            params[cp + '_nsteps'],
+                        )
+                        new_params.pop(cp + '_min')
+                        new_params.pop(cp + '_max')
+                        new_params.pop(cp + '_nsteps')
+                return new_params
+        else:
+            #Load some default configurations in the package
+            self._param_method = 'widefield_params' if len(
+                self._forw.codim_shape) == len(
+                    self._forw.dim_shape) else 'airyscan_params'
+        module_config = importlib.import_module(
+            'pyxudeconv.deconvolution.methods.configs.GARL.' +
+            self._param_method)
+        config_fct = getattr(module_config, self._param_method)
+        params = config_fct()
         return params
 
     def init_solver(self, param):
@@ -114,21 +127,23 @@ def load_model_weakly_convex(
     doSplineActivation=True,
     #current_directory=None,
 ):
-    directory_checkpoints = f'{name}checkpoints/'
+    directory_checkpoints = os.path.join(name, 'checkpoints')
 
     # retrieve last checkpoint
     if epoch is None:
-        files = glob.glob(
-            f'{directory_checkpoints}/checkpoints/*.pth',  #f'{current_directory}/trained_models/{name_glob}/checkpoints/*.pth',
-            recursive=False)
+        files = glob.glob(os.path.join(directory_checkpoints, 'checkpoints',
+                                       '*.pth'),
+                          recursive=False)
         epochs = map(
             lambda x: int(x.split("/")[-1].split('.pth')[0].split('_')[1]),
             files)
         epoch = max(epochs)
 
-    checkpoint_path = f'{directory_checkpoints}checkpoint_{epoch}.pth'
+    checkpoint_path = os.path.join(directory_checkpoints,
+                                   f'checkpoint_{epoch}.pth')
     # config file
-    config = json.load(open(f'{name}config.json', encoding="utf-8"))
+    config = json.load(
+        open(os.path.join(name, 'config.json'), encoding="utf-8"))
 
     # build model
 

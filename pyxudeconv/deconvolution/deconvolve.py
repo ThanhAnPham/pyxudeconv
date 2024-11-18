@@ -10,10 +10,10 @@ import json
 import platform
 import numpy as np
 import matplotlib.pyplot as plt
-from reader.get_reader import get_reader
+from pyxudeconv.deconvolution.reader.get_reader import get_reader
 import tifffile
 from .utils import convert2save
-import forward.convolution as forw
+import pyxudeconv.deconvolution.forward.convolution as forw
 
 import pyxu.opt.stop as pxst
 
@@ -86,7 +86,7 @@ def deconvolve(par=None):
     # Load phantom (if provided), measurements and create physical model from PSF data
     if par.phantom is not None:
         #Metrics
-        from deconvolution.utils import rsnr as cmp_metrics
+        from pyxudeconv.deconvolution.utils import rsnr as cmp_metrics
         read_phantom = get_reader(par.phantom)
         phantom = xp.array(read_phantom(par.phantom))
         phantom_name = par.phantom[par.phantom.rfind('/') + 1:par.phantom.
@@ -124,7 +124,8 @@ def deconvolve(par=None):
             cpar = par
             cpar.psf_sz = cpar.psf_sz if isinstance(
                 cpar.psf_sz, list) else list(cpar.psf_sz)
-            json.dump(cpar.__dict__, f, indent=2)
+            cpar = vars(cpar)
+            json.dump(cpar, f, indent=2,default=int)
 
     if par.fres:
         fh = logging.FileHandler(f'{par.fres}/run.log', mode='w')
@@ -184,14 +185,13 @@ def deconvolve(par=None):
     
     dpar = vars(par)
     for meth_iter, method in enumerate(par.methods):
-        module_class = importlib.import_module(f'methods.{method}')
+        module_class = importlib.import_module(f'pyxudeconv.deconvolution.methods.{method}')
         classmeth = getattr(module_class, method)
         cconfig = 'config_' + method
         if cconfig in dpar.keys():
             cdpar = dpar[cconfig]
         else:
             cdpar = ''
-        print(f'YOINK? {method}', cdpar)
         cmeth = classmeth(
             forw_model,
             g,
@@ -263,6 +263,11 @@ def deconvolve(par=None):
 
         plt.savefig(f'{par.fres}/res_{fid}.png', dpi=500, bbox_inches='tight')
     logger.info('Deconvolution finished')
+    if on_gpu:
+        xp.cuda.Device().synchronize()
+        xp._default_memory_pool.free_all_blocks()
+        xp._default_pinned_memory_pool.free_all_blocks()
+
     return ims
 
 

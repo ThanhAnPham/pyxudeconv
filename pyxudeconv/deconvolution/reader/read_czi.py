@@ -42,9 +42,9 @@ def read_czi(
             Toi = np.arange(Toi[0], Toi[-1])
 
         roi = np.array(roi)
-        if np.any(roi[2:]) is None or np.any(roi[2:] <= 0):
+        if np.any(roi[2:]==None) or np.any([cr <= 0 for cr in roi[2:]]):
             roi = total_bounding_rectangle
-        elif np.any(roi[:2]) is None or np.any(roi[:2] < 0):
+        elif np.any(roi[:2]==None) or np.any([cr < 0 for cr in roi[:2]]):
             roi[0] = np.maximum(
                 (total_bounding_rectangle[2] - total_bounding_rectangle[0]) //
                 2 - roi[2] // 2, np.zeros(1))

@@ -117,7 +117,7 @@ def get_param(param_file=None):
         type=int,
         nargs='+',
         default=(0, 0, None, None),  #298, 298),
-        help='Tuple to deconvolve only a region of interest (x0,y0,w,h)',
+        help='Tuple to deconvolve a region of interest (x0,y0,w,h). If x0,y0==-1, set in such way that ROI is centered. If w,h=-1, set to maximize the field of view.',
     )
 
     parser.add_argument(

@@ -22,7 +22,7 @@ class Tikhonov(HyperParametersDeconvolutionOptimizer):
             params = self._param_method
         else:
             params = dict()
-            params['tau'] = np.logspace(-3, 4, 1)  #15)
+            params['tau'] = np.logspace(-5, 4, 1)
         return params
 
     def init_solver(self, param):

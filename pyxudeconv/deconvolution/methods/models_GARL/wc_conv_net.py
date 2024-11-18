@@ -2,9 +2,9 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.utils.parametrize as P
-from methods.models_GARL.multi_conv import MultiConv2d, MultiConv3d
-from methods.models_GARL.spline_module import LinearSpline, clip_activation
-from methods.models_GARL.spline_s_shape import s_shape_integrate, s_shape, s_shape_grad
+from pyxudeconv.deconvolution.methods.models_GARL.multi_conv import MultiConv2d, MultiConv3d
+from pyxudeconv.deconvolution.methods.models_GARL.spline_module import LinearSpline, clip_activation
+from pyxudeconv.deconvolution.methods.models_GARL.spline_s_shape import s_shape_integrate, s_shape, s_shape_grad
 import time
 
 class WCvxConvNet(nn.Module):

@@ -3,7 +3,7 @@
 from pyxu.operator import KLDivergence
 
 # in future release, RL will be incorporated in Pyxu
-import methods.solver as solver
+import pyxudeconv.deconvolution.methods.solver as solver
 
 from .ABC import HyperParametersDeconvolutionOptimizer
 

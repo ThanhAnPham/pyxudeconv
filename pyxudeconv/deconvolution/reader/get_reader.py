@@ -1,6 +1,6 @@
 import os, importlib
 import numpy as np
-
+import inspect
 
 try:
     import cupy as cp
@@ -8,14 +8,16 @@ except ImportError as e:
     import numpy as cp
 
 
+parent_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+
 def get_reader(fpath):
     r'''
     Load the correct file reader based on file extension
     '''
     if isinstance(fpath, str):
         f_extension = fpath[fpath.rfind('.') + 1:]
-        if os.path.exists(f'pyxudeconv/deconvolution/reader/read_{f_extension}.py'):
-            module_read = importlib.import_module(f'reader.read_{f_extension}')
+        if os.path.exists(os.path.join(parent_dir,f'read_{f_extension}.py')):
+            module_read = importlib.import_module(f'pyxudeconv.deconvolution.reader.read_{f_extension}')
             read_file = getattr(module_read, f'read_{f_extension}')
             return read_file
         else:

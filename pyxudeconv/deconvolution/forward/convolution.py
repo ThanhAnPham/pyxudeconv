@@ -24,6 +24,14 @@ def getModel(
     ''' Function that returns a phantom (if available), forward model, and the measurements
     For deconvolution, the PSF and data readers are expected to output a hyper-stack with dimensions order (Time x nviews x nchannels x Z x Y x X). If not relevant (e.g., Time), there is no need to create singleton dimension.
     '''
+    if isinstance(coi, tuple):
+        if len(coi)>1:
+            has_mult_channels = True
+        else:
+            has_mult_channels = False
+    else:
+        has_mult_channels = False
+
     hoi = tuple(range(nviews))
     psf = xp.array(
         read_psf(psfpath, Hoi=hoi, Coi=coi_psf, roi=psf_roi).astype(
@@ -32,7 +40,7 @@ def getModel(
     g = xp.array(
         read_data(datapath, Hoi=hoi, Coi=coi, roi=roi).astype(
             "float32"))  #(Time), nviews, nchannels, z-axis, y-axis, x-axis
-    if psf.ndim > 3 + 1 * (isinstance(coi, tuple)):
+    if psf.ndim > 3 + 1 * has_mult_channels:
         #Deconvolution problem has more than one view (Airyscan-like)
         if psf.shape[0] == 1:
             psf = psf.squeeze(0)
@@ -64,7 +72,7 @@ def getModel(
     pad_meas = pxo.Pad(g.shape, padw)
 
     #Physical model
-    if nviews > 1:
+    if nviews > 1 and psf.ndim>3:
         forw = pad_meas.T * pxo.stack([
             FFTConvolve(
                 dim_shape=recon_shape,
