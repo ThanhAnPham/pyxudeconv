@@ -22,7 +22,7 @@ class Tikhonov(HyperParametersDeconvolutionOptimizer):
             params = self._param_method
         else:
             params = dict()
-            params['tau'] = np.logspace(-5, 4, 1)
+            params['tau'] = 1e-5
         return params
 
     def init_solver(self, param):
@@ -30,11 +30,13 @@ class Tikhonov(HyperParametersDeconvolutionOptimizer):
             dim_shape=self._forw.codim_shape).argshift(-self._g) * self._forw
         loss += param['tau'] * SquaredL2Norm(
             dim_shape=self._trim_buffer.codim_shape) * self._trim_buffer
-
+        
+        print(f'Set constraint for Tikhonov [{self._bg_est},{np.inf}]')
+        
         self._solver = PGD(
             loss,
-            g=PositiveOrthant(self._forw.dim_shape),
+            g=PositiveOrthant(self._forw.dim_shape).argshift(-self._bg_est),
             verbosity=self._disp,
-            stop_rate=1,
+            stop_rate=5,
             show_progress=False,
         )

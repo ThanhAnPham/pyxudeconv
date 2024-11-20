@@ -48,6 +48,7 @@ def deconvolve(par=None):
         import cupy as xp
         on_gpu = True
         xp.cuda.Device(par.gpu).use()
+        import torch
     else:
         import numpy as xp
         on_gpu = False
@@ -142,7 +143,7 @@ def deconvolve(par=None):
         bg_est = xp.maximum(par.bg, xp.zeros(1))
         bg_est = bg_est[0]
     logger.info(f'Estimated background: {bg_est:.3e}')
-
+    x0 = xp.maximum(x0, bg_est)
     x0_metric = cmp_metrics(phantom, op4metrics(x0))
 
     if par.saveMeas:
@@ -267,6 +268,7 @@ def deconvolve(par=None):
         xp.cuda.Device().synchronize()
         xp._default_memory_pool.free_all_blocks()
         xp._default_pinned_memory_pool.free_all_blocks()
+        torch.cuda.empty_cache()
 
     return ims
 
