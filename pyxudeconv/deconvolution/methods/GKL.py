@@ -1,9 +1,10 @@
-# Goujon Accelerated Richardson-Lucy
+# Goujon L2-norm
 import numpy as np
 
 #from libraries import *
 #import pyxu
-from pyxu.operator import KLDivergence
+from pyxu.operator import PositiveOrthant, KLDivergence
+from pyxu.opt.solver import PD3O
 import os
 import glob
 
@@ -17,7 +18,6 @@ from pyxudeconv.deconvolution.methods.models_GARL.wc_conv_net import WCvxConvNet
 import json
 
 #in future release, RRL will be incorporated in Pyxu or at least as a plugin
-from pyxudeconv.deconvolution.methods.solver import RRL
 
 from .ABC import HyperParametersDeconvolutionOptimizer
 import importlib
@@ -28,13 +28,13 @@ parent_dir = os.path.dirname(
     os.path.abspath(inspect.getfile(inspect.currentframe())))
 
 __all__ = [
-    "GARL",
+    "GKL",
 ]
 
 
-class GARL(HyperParametersDeconvolutionOptimizer):
+class GKL(HyperParametersDeconvolutionOptimizer):
     r"""
-    Hyper parameters optimizer for Goujon Accelerated Richardson-Lucy
+    Hyper parameters optimizer for Goujon Least-Square
     """
 
     def get_hyperparams(self):
@@ -51,8 +51,6 @@ class GARL(HyperParametersDeconvolutionOptimizer):
                 config_fct = getattr(module_config, curr_modality)
                 subparams = config_fct()
                 self._param_method['model'] = subparams['model']
-            if 'acceleration' not in self._param_method.keys():
-                self._param_method['acceleration'] = [True]
             return self._param_method
         if isinstance(self._param_method, str):
             if '.json' in self._param_method[self._param_method.rfind('.'):]:
@@ -72,6 +70,11 @@ class GARL(HyperParametersDeconvolutionOptimizer):
                         new_params.pop(cp + '_max')
                         new_params.pop(cp + '_nsteps')
                 return new_params
+            elif self._param_method == '':
+                #Load some default configurations in the package
+                self._param_method = 'widefield_params' if len(
+                    self._forw.codim_shape) == len(
+                        self._forw.dim_shape) else 'airyscan_params'
         else:
             #Load some default configurations in the package
             self._param_method = 'widefield_params' if len(
@@ -82,13 +85,10 @@ class GARL(HyperParametersDeconvolutionOptimizer):
             self._param_method)
         config_fct = getattr(module_config, self._param_method)
         params = config_fct()
-        if not hasattr(self._param_method, 'acceleration'):
-            self._param_method['acceleration'] = [True]
         return params
 
     def init_solver(self, param):
         device = torch.device(self._device_name)
-        lossRL = KLDivergence(self._g)
         reg_shape = self._trim_buffer.codim_shape  #chooses where the regularization is enforced
         NN, applyNN, gradNN, proxNN = load_model_weakly_convex(
             param['model'],
@@ -100,27 +100,30 @@ class GARL(HyperParametersDeconvolutionOptimizer):
         )
         NN.to(device)
         NN.conv_layer.spectral_norm(mode="power_method", n_steps=200)
+
         R = pxotorch.from_torch(dim_shape=reg_shape,
                                 codim_shape=(1),
                                 apply=applyNN,
                                 cls=pxa.ProxDiffFunc,
                                 grad=gradNN,
                                 prox=None)
-        R.diff_lipschitz = NN.get_mu().maximum(
-            torch.tensor(1)).detach().cpu().numpy()
-
         R = param['lmbd'] * R * self._trim_buffer
-        self._solver = RRL(
-            lossRL,
-            self._forw,
-            self._g,
-            R,
+        R.diff_lipschitz = param['lmbd'] * NN.get_mu().maximum(torch.tensor(
+            1)).detach().cpu().numpy() * self._trim_buffer.lipschitz
+        loss = KLDivergence(self._g).argshift(self._bg_est)
+        self._solver = PD3O(
+            f=R,
+            g=PositiveOrthant(self._forw.dim_shape),
+            h=loss,
+            K=self._forw,
             verbosity=self._disp,
-            stop_rate=1,
+            stop_rate=5,
             show_progress=False,
-            bg=self._bg_est,
         )
-        self._solver_param = {'acceleration': param['acceleration']}
+        self._solver_param = {
+            'tuning_strategy': 3,
+            'tau': 1/R.diff_lipschitz,
+        }
 
 
 def load_model_weakly_convex(

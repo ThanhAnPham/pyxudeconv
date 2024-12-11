@@ -117,7 +117,8 @@ def get_param(param_file=None):
         type=int,
         nargs='+',
         default=(0, 0, None, None),  #298, 298),
-        help='Tuple to deconvolve a region of interest (x0,y0,w,h). If x0,y0==-1, set in such way that ROI is centered. If w,h=-1, set to maximize the field of view.',
+        help=
+        'Tuple to deconvolve a region of interest (x0,y0,w,h). If x0,y0==-1, set in such way that ROI is centered. If w,h=-1, set to maximize the field of view.',
     )
 
     parser.add_argument(
@@ -173,9 +174,25 @@ def get_param(param_file=None):
         help=
         'Name of the configuration file located in folder methods/configs/GARL for the method GARL',
     )
+    
+    parser.add_argument(
+        '--config_GKL',
+        type=str,
+        default='airyscan_params',
+        help=
+        'Name of the configuration file located in folder methods/configs/GARL for the method GKL',
+    )
+
+    parser.add_argument(
+        '--config_GLS',
+        type=str,
+        default='airyscan_params',
+        help=
+        'Name of the configuration file located in folder methods/configs/GARL for the method GARL',
+    )
 
     par = parser.parse_args()
-    if param_file is not None and param_file!='':
+    if param_file is not None and param_file != '':
         cpfile = param_file
     elif par.param_file is not None and par.param_file != '':
         cpfile = par.param_file
@@ -184,8 +201,11 @@ def get_param(param_file=None):
     if cpfile is not None:
         print(f'Loading param file {cpfile}')
         with open(cpfile, 'r', encoding="utf-8") as f:
-            par.__dict__ = json.load(f)
-    if par.coi_psf is None:
+            par.__dict__ = par.__dict__ | json.load(f)
+    if hasattr(par, 'coi_psf'):
+        if par.coi_psf is None:
+            par.coi_psf = par.coi
+    else:
         par.coi_psf = par.coi
     par.psf_sz = np.array(par.psf_sz)
     par.phantom = None if par.phantom == 'None' else par.phantom

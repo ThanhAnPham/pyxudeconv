@@ -47,6 +47,7 @@ class HyperParametersOptimizer(ABC):
         self._save_results = save_results
         self._pxunit = pxunit
         self._pxsz = pxsz
+        self._solver_param = {}
 
     @abstractmethod
     def init_solver(self, param):
@@ -81,7 +82,7 @@ class HyperParametersOptimizer(ABC):
                 x0=x0,
                 stop_crit=self.stop_crit,
                 track_objective=True,
-                acceleration=True,
+                **self._solver_param,
             )
             for citer, data in enumerate(self._solver.steps()):
                 citer += 1

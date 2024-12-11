@@ -18,7 +18,16 @@ class RL(HyperParametersDeconvolutionOptimizer):
     """
 
     def get_hyperparams(self):
-        return dict()
+        if isinstance(self._param_method, dict):
+            #Parameters are directly provided as a dictionary (possible if deconvolve is called from Python)
+            if 'acceleration' not in self._param_method.keys():
+                self._param_method['acceleration'] = [True]
+            return self._param_method
+        else:
+            new_param = {
+                'acceleration': [True],
+            }
+            return new_param
 
     def init_solver(self, param):
         lossRL = KLDivergence(self._g)
@@ -31,3 +40,4 @@ class RL(HyperParametersDeconvolutionOptimizer):
             stop_rate=1,
             bg=self._bg_est,
         )
+        self._solver_param = {'acceleration': param['acceleration']}

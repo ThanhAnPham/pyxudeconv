@@ -31,14 +31,14 @@ class RL(pxa.Solver):
     """
 
     def __init__(
-        self,
-        f: pxa.ProxFunc = None,  #for loss computation only
-        H: pxt.OpT = None,
-        g: pxt.NDArray = None,
-        epsi: float = 0.000001,
-        bg: float = 0.0001,
-        ub: float = float('inf'),
-        **kwargs,
+            self,
+            f: pxa.ProxFunc = None,  #for loss computation only
+            H: pxt.OpT = None,
+            g: pxt.NDArray = None,
+            epsi: float = 0.00001,
+            bg: float = 0.00001,
+            ub: float = float('inf'),
+            **kwargs,
     ):
         kwargs.update(log_var=kwargs.get("log_var", ("x", )), )
         super().__init__(**kwargs)
@@ -92,10 +92,10 @@ class RL(pxa.Solver):
         p = mst["x"] - mst["x_prev"]
         p *= a
         p += mst["x"]
-        p.clip(self._bg, self._ub, out=p)
+        p.clip(self._epsi, self._ub, out=p)
         p *= self._H.adjoint(
-            self._g / xp.maximum(self._H(p), self._epsi)) / self._Ht1
-        p.clip(self._bg, self._ub, out=p)
+            self._g / xp.maximum(self._H(p) + self._bg, self._epsi)) / self._Ht1
+        p.clip(self._epsi, self._ub, out=p)
         mst["x_prev"], mst["x"] = mst["x"], p
 
     def default_stop_crit(self) -> pxa.StoppingCriterion:
@@ -115,6 +115,7 @@ class RL(pxa.Solver):
         func = lambda x: self._f.apply(self._H.apply(x))
 
         y = func(self._mstate["x"])
+        self._mstate["f"] = y
         return y
 
     def solution(self) -> pxt.NDArray:
@@ -149,15 +150,15 @@ class RRL(pxa.Solver):
     """
 
     def __init__(
-        self,
-        f: pxa.ProxFunc = None,  #for loss computation only
-        H: pxt.OpT = None,
-        g: pxt.NDArray = None,
-        R: pxa.ProxFunc = None,  #needs gradient
-        epsi: float = 0.000001,
-        bg: float = 0.0001,
-        ub: float = float('inf'),
-        **kwargs,
+            self,
+            f: pxa.ProxFunc = None,  #for loss computation only
+            H: pxt.OpT = None,
+            g: pxt.NDArray = None,
+            R: pxa.ProxFunc = None,  #needs gradient
+            epsi: float = 0.00001,
+            bg: float = 0.00001,
+            ub: float = float('inf'),
+            **kwargs,
     ):
         kwargs.update(log_var=kwargs.get("log_var", ("x", )), )
         super().__init__(**kwargs)
@@ -178,7 +179,7 @@ class RRL(pxa.Solver):
         xp = pxu.get_array_module(g)
         self._Ht1 = xp.maximum(H.adjoint(xp.ones(H.codim_shape)), self._epsi)
         print(f'Min value in HT1 for RRL {self._Ht1.min()}')
-        print(f'Set constraint for RRL [{self._bg},{self._ub}]')
+        print(f'Set constraint for RRL [{self._epsi},{self._ub}]')
 
     def m_init(
         self,
@@ -211,21 +212,11 @@ class RRL(pxa.Solver):
         p = mst["x"] - mst["x_prev"]
         p *= a
         p += mst["x"]
-        p.clip(self._bg, self._ub, out=p)  #minimum background level
-        p *= (self._H.adjoint(self._g / xp.maximum(self._H(p), self._epsi)) -
+        p.clip(self._epsi, self._ub, out=p) # minimum background level
+        p *= (self._H.adjoint(self._g / xp.maximum(self._H(p) + self._bg, self._epsi)) -
               self._R.grad(p)) / self._Ht1
-        p.clip(self._bg, self._ub, out=p)
+        p.clip(self._epsi, self._ub, out=p)
         mst["x_prev"], mst["x"] = mst["x"], p
-
-        #z = pxu.copy_if_unsafe(p - mst["x"]*(self._Ht1 - self._H.adjoint(self._g/xp.maximum(self._H(p),self._epsi)) + self._WCR.grad(p))/self._Ht1)
-        # --------------------------------------------
-        #mst["x_prev"], mst["x"] = mst["x"], z
-
-        #z = mst["x"]*(self._H.adjoint(self._g/(xp.maximum(self._H(mst["x"]),self._epsi))) - self._WCR.grad(mst["x"]))/self._Ht1
-        #z = z.clip(0.,None)
-        # --------------------------------------------
-
-        #mst["x_prev"], mst["x"] = mst["x"], z
 
     def default_stop_crit(self) -> pxa.StoppingCriterion:
         from pyxu.opt.stop import RelError
@@ -243,6 +234,7 @@ class RRL(pxa.Solver):
     def objective_func(self) -> pxt.NDArray:
         func = lambda x: self._f.apply(self._H.apply(x)) + self._R.apply(x)
         y = func(self._mstate["x"])
+        self._mstate["f"] = y
         return y
 
     def solution(self) -> pxt.NDArray:

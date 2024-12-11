@@ -22,7 +22,7 @@ class Tikhonov(HyperParametersDeconvolutionOptimizer):
             params = self._param_method
         else:
             params = dict()
-            params['tau'] = 1e-5
+            params['tau'] = [1e-5]
         return params
 
     def init_solver(self, param):
@@ -40,3 +40,4 @@ class Tikhonov(HyperParametersDeconvolutionOptimizer):
             stop_rate=5,
             show_progress=False,
         )
+        self._solver_param = {'acceleration': True}

@@ -25,7 +25,7 @@ def getModel(
     For deconvolution, the PSF and data readers are expected to output a hyper-stack with dimensions order (Time x nviews x nchannels x Z x Y x X). If not relevant (e.g., Time), there is no need to create singleton dimension.
     '''
     if isinstance(coi, tuple):
-        if len(coi)>1:
+        if len(coi) > 1:
             has_mult_channels = True
         else:
             has_mult_channels = False
@@ -72,7 +72,7 @@ def getModel(
     pad_meas = pxo.Pad(g.shape, padw)
 
     #Physical model
-    if nviews > 1 and psf.ndim>3:
+    if nviews > 1 and psf.ndim > 3:
         forw = pad_meas.T * pxo.stack([
             FFTConvolve(
                 dim_shape=recon_shape,
@@ -120,11 +120,13 @@ def getModel(
     else:
         op4metrics = trim_buffer
 
-    fid = '{}_nv_{:d}_coi'.format(fid, nviews)
+    if nviews > 1:
+        fid = f'{fid}_nv_{nviews:d}'
+
     if isinstance(coi, int):
-        fid = '{}_{:d}'.format(fid, coi)
+        fid = f'{fid}_c_{coi:d}'
     else:
         for ccoi in coi:
-            fid = '{}_{:d}'.format(fid, ccoi)
+            fid = f'{fid}_c_{ccoi:d}'
 
     return forw, g, trim_buffer, op4metrics, phantom, fid, psf, gnormalizer

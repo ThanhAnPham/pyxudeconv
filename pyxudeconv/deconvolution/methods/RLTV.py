@@ -7,7 +7,7 @@ from pyxu.operator import KLDivergence, Gradient
 import pyxu.info.ptype as pxt
 import pyxu.util as pxu
 # in future release, RRL will be incorporated in Pyxu
-from methods.solver import RRL
+from pyxudeconv.deconvolution.methods.solver import RRL
 
 from .ABC import HyperParametersDeconvolutionOptimizer
 
@@ -22,9 +22,15 @@ class RLTV(HyperParametersDeconvolutionOptimizer):
     """
 
     def get_hyperparams(self):
-        params = dict()
-        params['tau'] = np.logspace(-7, 0, 8)  #15)
-        return params
+        if isinstance(self._param_method, dict):
+            if 'acceleration' not in self._param_method.keys():
+                self._param_method['acceleration'] = [True]
+            if 'tau' not in self._param_method.keys():
+                self._param_method['tau'] = [0.1] #np.logspace(-1, 0, 2)
+            return self._param_method
+        else:
+            params = {'tau':[0.1],'acceleration':[True],}
+            return params
 
     def init_solver(self, param):
         reg_shape = self._trim_buffer.codim_shape  #chooses where the regularization is enforced
@@ -45,6 +51,7 @@ class RLTV(HyperParametersDeconvolutionOptimizer):
             show_progress=False,
             bg=self._bg_est,
         )
+        self._solver_param = {'acceleration':param['acceleration']}
 
 
 class diffL21Norm(pxa.ProxDiffFunc):

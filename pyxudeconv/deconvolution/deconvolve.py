@@ -60,6 +60,7 @@ def deconvolve(par=None):
     if hasattr(par, 'save_results'):
         save_results = par.save_results
     else:
+
         def save_results(vol, fname, pxsz, unit):
             if vol.ndim == 3:
                 axes = 'ZYX'
@@ -71,7 +72,7 @@ def deconvolve(par=None):
                 full_fname = f'{fname}.ome.tif'
             tifffile.imwrite(
                 full_fname,
-                vol,
+                vol.astype(dtype=np.float32),
                 imagej=True,
                 resolution=(1 / pxsz[0], 1 / pxsz[1]),
                 metadata={
@@ -126,7 +127,7 @@ def deconvolve(par=None):
             cpar.psf_sz = cpar.psf_sz if isinstance(
                 cpar.psf_sz, list) else list(cpar.psf_sz)
             cpar = vars(cpar)
-            json.dump(cpar, f, indent=2,default=int)
+            json.dump(cpar, f, indent=2, default=int)
 
     if par.fres:
         fh = logging.FileHandler(f'{par.fres}/run.log', mode='w')
@@ -148,16 +149,18 @@ def deconvolve(par=None):
 
     if par.saveMeas:
         g2save = convert2save(g * gnormalizer)
-        save_results(g2save, f'{par.fres}/g_{fid}',pxsz,par.pxunit)
+        save_results(g2save, f'{par.fres}/g_{fid}', pxsz, par.pxunit)
         psf2save = convert2save(psf if psf.ndim ==
                                 5 else xp.expand_dims(psf, 1))
-        save_results(psf2save, f'{par.fres}/psf_{fid}',pxsz,par.pxunit)
+        save_results(psf2save, f'{par.fres}/psf_{fid}', pxsz, par.pxunit)
 
     if par.phantom is not None and par.saveMeas:
-        save_results(phantom.get() if on_gpu else phantom, f'{par.fres}/xgt_{fid}',pxsz,par.pxunit)
+        save_results(phantom.get() if on_gpu else phantom,
+                     f'{par.fres}/xgt_{fid}', pxsz, par.pxunit)
     if hasattr(par, 'create_fname'):
         create_fname = par.create_fname
     else:
+
         def create_fname(
             meth,
             paramstr,
@@ -167,10 +170,12 @@ def deconvolve(par=None):
                 return f'{par.fres}/{meth}_{fid}_{paramstr}.ome.tif'
             else:
                 return f'{par.fres}/{meth}_{fid}_{paramstr}_{metric:.4e}.ome.tif'
+
     if par.saveMeas:
-        save_results(trim_buffer(x0).get() if on_gpu else x0, create_fname('x0', '', x0_metric),pxsz,par.pxunit)
-    
-    stop_crit = pxst.MaxIter(par.Nepoch)
+        save_results(
+            trim_buffer(x0).get() if on_gpu else x0,
+            create_fname('x0', '', x0_metric), pxsz, par.pxunit)
+
     ims = []
     imstit = []
     if phantom is not None:
@@ -180,13 +185,16 @@ def deconvolve(par=None):
     ims.append((gnormalizer * g).copy().get() if on_gpu else gnormalizer *
                g.copy())
     imstit.append('Meas')
-    
+
     if par.disp == 0:
         par.disp = 1e9
-    
+
+    nepochs = par.Nepoch * np.ones(len(par.methods))
     dpar = vars(par)
     for meth_iter, method in enumerate(par.methods):
-        module_class = importlib.import_module(f'pyxudeconv.deconvolution.methods.{method}')
+        stop_crit = pxst.MaxIter(nepochs[meth_iter])
+        module_class = importlib.import_module(
+            f'pyxudeconv.deconvolution.methods.{method}')
         classmeth = getattr(module_class, method)
         cconfig = 'config_' + method
         if cconfig in dpar.keys():
@@ -223,7 +231,7 @@ def deconvolve(par=None):
                 f'{c[0]} : {c[1]}'
                 for c in zip(bestparams.keys(), bestparams.values())
             ]) + f' : {bestmetric}')
-            cimstit = f'{method} {bestmetric}'
+            cimstit = f'{method} {bestmetric:.2f}'
 
         ims.append(bestrecon.get() if on_gpu else bestrecon)
         imstit.append(cimstit)
@@ -252,7 +260,7 @@ def deconvolve(par=None):
         nrow = 2
         ncol = np.ceil(len(ims) / nrow).astype(int)
         _, axs = plt.subplots(nrows=nrow, ncols=ncol)
-        
+
         for itera, ax in enumerate(axs.reshape(-1)):
             if itera < len(ims):
                 plt.axes(ax)
