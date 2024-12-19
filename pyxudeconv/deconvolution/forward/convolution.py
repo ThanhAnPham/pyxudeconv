@@ -64,10 +64,10 @@ def getModel(
     psf = psf.squeeze()
     g = np.maximum(g.squeeze(), 0)
 
-    print('PSF shape', psf.shape, 'and min value', psf.min())
+    print('PSF shape', psf.shape, '| min value', psf.min(),'| multi-channel ',has_mult_channels)
     # Define shape of the reconstructed image/volume
     padw = (*tuple([0] * (g.ndim - 3)), *bufferwidth)
-    print('Measurements shape', g.shape, 'and min value', g.min())
+    print('Measurements shape', g.shape, '| min value', g.min())
     recon_shape = tuple(np.add(g.shape[-3:], np.array(padw[-3:]) * 2))
     pad_meas = pxo.Pad(g.shape, padw)
 

@@ -76,4 +76,4 @@ def read_czi(
                             },
                                         zoom=zoom,
                                         roi=roi))
-        return out
+        return np.squeeze(out)
