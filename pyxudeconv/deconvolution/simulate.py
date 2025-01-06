@@ -4,12 +4,13 @@ import importlib
 import platform
 import tifffile
 import json
-import forward.convolution as forw
+import pyxudeconv
+import pyxudeconv.deconvolution.forward.convolution as forw
 from argparse import ArgumentParser
 import pyxu.operator as pxo
-from pyxu.operator import FFTConvolveFast
-from reader.get_reader import get_reader
-from utils import convert2save
+from pyxu.operator import FFTConvolve
+from pyxudeconv.deconvolution.reader.get_reader import get_reader
+from pyxudeconv.deconvolution.utils import convert2save
 
 
 def simulate():
@@ -37,13 +38,13 @@ def simulate():
     parser.add_argument(
         '--phantom',
         type=str,
-        default='../data/calibration_3/sample_calib.ome.tif',
+        default='/data/tampham/calibration_3/sample_calib.ome.tif',
         help='Phantom filename, e.g., tube',
     )
     parser.add_argument(
         '--psfpath',
         type=str,
-        default='../data/real_airyscan/Airyscan_PSF.czi',
+        default='/data/tampham/Zeiss/Airyscan_PSF.czi',
         help='Path to the point-spread function',
     )
     parser.add_argument(
@@ -56,9 +57,8 @@ def simulate():
     parser.add_argument(
         '--bg',
         type=float,
-        default=None,
-        help=
-        'Minimum value of the deconvolved volume. If None, estimated from measurements.',
+        default=1e-4,
+        help='Background value in the noiseless measurements.',
     )
     parser.add_argument(
         '--roi',
@@ -102,11 +102,12 @@ def simulate():
         default=(0.001, 2.5),
     )
     par = parser.parse_args()
+    par.psf_sz = np.array(par.psf_sz)
     if par.param_file is not None and par.param_file != '':
         print(f'Loading param file {par.param_file}')
         with open(par.param_file, 'r', encoding="utf-8") as f:
             par.__dict__ = json.load(f)
-    
+
     if par.gpu >= 0:
         ordi = platform.system()
         if ordi == 'Darwin':  # mac
@@ -163,14 +164,14 @@ def simulate():
     #Physical model
     if nviews > 1:
         forw_conv = pxo.stack([
-            FFTConvolveFast(
+            FFTConvolve(
                 dim_shape=recon_shape,
                 kernel=psf_view,
                 center=tuple(np.array(psf_view.shape) // 2),
             ) for psf_view in psf
         ])
     else:
-        forw_conv = FFTConvolveFast(
+        forw_conv = FFTConvolve(
             dim_shape=recon_shape,
             kernel=psf,
             center=tuple(np.array(psf.shape) // 2),
@@ -178,6 +179,7 @@ def simulate():
     phantom /= phantom.max()
     phantom += par.noise[0]
     g = forw_conv(phantom)
+    g += par.bg
     rng = xp.random.default_rng(0)
     if par.noise[1] > 0:
         sig = xp.sqrt(g / xp.array(par.noise[1]))
@@ -193,6 +195,8 @@ def simulate():
     else:
         for ccoi in par.coi:
             fid = f'{fid}_{ccoi:d}'
+    fid = f'{fid}_n_{par.noise[0]}_{par.noise[1]}'
+    fid = f'{fid}_bg_{par.bg}'
     if not os.path.exists(par.fres):
         os.makedirs(par.fres)
     tifffile.imwrite(
@@ -230,6 +234,9 @@ def simulate():
         },
     )
     with open(f'{par.fres}/params.json', 'w', encoding='utf-8') as f:
+        #par.psf_sz
+        par.psf_sz = par.psf_sz if isinstance(par.psf_sz, list) else list(
+            par.psf_sz)
         json.dump(par.__dict__, f, indent=2)
 
 

@@ -22,10 +22,13 @@ class RL(HyperParametersDeconvolutionOptimizer):
             #Parameters are directly provided as a dictionary (possible if deconvolve is called from Python)
             if 'acceleration' not in self._param_method.keys():
                 self._param_method['acceleration'] = [True]
+            if 'epsi' not in self._param_method.keys():
+                self._param_method['epsi'] = [1e-3]
             return self._param_method
         else:
             new_param = {
                 'acceleration': [True],
+                'epsi': [1e-3],
             }
             return new_param
 
@@ -35,6 +38,7 @@ class RL(HyperParametersDeconvolutionOptimizer):
             lossRL,
             self._forw,
             self._g,
+            param['epsi'],
             verbosity=self._disp,
             show_progress=False,
             stop_rate=1,

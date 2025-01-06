@@ -53,6 +53,8 @@ class GARL(HyperParametersDeconvolutionOptimizer):
                 self._param_method['model'] = subparams['model']
             if 'acceleration' not in self._param_method.keys():
                 self._param_method['acceleration'] = [True]
+            if 'epsi' not in self._param_method.keys():
+                self._param_method['epsi'] = [1e-3]
             return self._param_method
         if isinstance(self._param_method, str):
             if '.json' in self._param_method[self._param_method.rfind('.'):]:
@@ -84,6 +86,8 @@ class GARL(HyperParametersDeconvolutionOptimizer):
         params = config_fct()
         if not hasattr(self._param_method, 'acceleration'):
             self._param_method['acceleration'] = [True]
+        if not hasattr(self._param_method, 'epsi'):
+            self._param_method['epsi'] = [1e-3]
         return params
 
     def init_solver(self, param):
@@ -115,6 +119,7 @@ class GARL(HyperParametersDeconvolutionOptimizer):
             self._forw,
             self._g,
             R,
+            param['epsi'],
             verbosity=self._disp,
             stop_rate=1,
             show_progress=False,

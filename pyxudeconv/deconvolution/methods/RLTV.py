@@ -20,13 +20,15 @@ class RLTV(HyperParametersDeconvolutionOptimizer):
     r"""
     Hyper parameters optimizer for Total-Variation Accelerated Richardson-Lucy
     """
-
+    
     def get_hyperparams(self):
         if isinstance(self._param_method, dict):
             if 'acceleration' not in self._param_method.keys():
                 self._param_method['acceleration'] = [True]
             if 'tau' not in self._param_method.keys():
                 self._param_method['tau'] = [0.1] #np.logspace(-1, 0, 2)
+            if 'epsi' not in self._param_method.keys():
+                self._param_method['epsi'] = [1e-3]
             return self._param_method
         else:
             params = {'tau':[0.1],'acceleration':[True],}
@@ -46,6 +48,7 @@ class RLTV(HyperParametersDeconvolutionOptimizer):
             self._forw,
             self._g,
             reg,
+            param['epsi'],
             verbosity=self._disp,
             stop_rate=1,
             show_progress=False,

@@ -38,6 +38,7 @@ class RL(pxa.Solver):
             epsi: float = 0.00001,
             bg: float = 0.00001,
             ub: float = float('inf'),
+            lb: float = 1e-6,
             **kwargs,
     ):
         kwargs.update(log_var=kwargs.get("log_var", ("x", )), )
@@ -55,11 +56,12 @@ class RL(pxa.Solver):
         self._g = g
         self._epsi = epsi
         self._bg = bg
+        self._lb = lb
         self._ub = ub
         xp = pxu.get_array_module(g)
         self._Ht1 = xp.maximum(H.adjoint(xp.ones(H.codim_shape)), self._epsi)
         print(f'Min value in HT1 for RL {self._Ht1.min()}')
-        print(f'Set constraint for RL [{self._bg},{self._ub}]')
+        print(f'Set constraint for RL [{0},{self._ub}]')
 
     def m_init(
         self,
@@ -92,10 +94,10 @@ class RL(pxa.Solver):
         p = mst["x"] - mst["x_prev"]
         p *= a
         p += mst["x"]
-        p.clip(self._epsi, self._ub, out=p)
+        p.clip(self._lb, self._ub, out=p)
         p *= self._H.adjoint(
             self._g / xp.maximum(self._H(p) + self._bg, self._epsi)) / self._Ht1
-        p.clip(self._epsi, self._ub, out=p)
+        p.clip(self._lb, self._ub, out=p)
         mst["x_prev"], mst["x"] = mst["x"], p
 
     def default_stop_crit(self) -> pxa.StoppingCriterion:
@@ -112,7 +114,7 @@ class RL(pxa.Solver):
         return stop_crit
 
     def objective_func(self) -> pxt.NDArray:
-        func = lambda x: self._f.apply(self._H.apply(x))
+        func = lambda x: self._f.apply(self._H.apply(x) + self._bg)
 
         y = func(self._mstate["x"])
         self._mstate["f"] = y
@@ -158,6 +160,7 @@ class RRL(pxa.Solver):
             epsi: float = 0.00001,
             bg: float = 0.00001,
             ub: float = float('inf'),
+            lb: float = 1e-6,
             **kwargs,
     ):
         kwargs.update(log_var=kwargs.get("log_var", ("x", )), )
@@ -176,10 +179,11 @@ class RRL(pxa.Solver):
         self._epsi = epsi
         self._bg = bg
         self._ub = ub
+        self._lb = lb
         xp = pxu.get_array_module(g)
         self._Ht1 = xp.maximum(H.adjoint(xp.ones(H.codim_shape)), self._epsi)
         print(f'Min value in HT1 for RRL {self._Ht1.min()}')
-        print(f'Set constraint for RRL [{self._epsi},{self._ub}]')
+        print(f'Set constraint for RRL [{self._lb},{self._ub}]')
 
     def m_init(
         self,
@@ -212,10 +216,10 @@ class RRL(pxa.Solver):
         p = mst["x"] - mst["x_prev"]
         p *= a
         p += mst["x"]
-        p.clip(self._epsi, self._ub, out=p) # minimum background level
+        p.clip(self._lb, self._ub, out=p) # minimum background level
         p *= (self._H.adjoint(self._g / xp.maximum(self._H(p) + self._bg, self._epsi)) -
               self._R.grad(p)) / self._Ht1
-        p.clip(self._epsi, self._ub, out=p)
+        p.clip(self._lb, self._ub, out=p)
         mst["x_prev"], mst["x"] = mst["x"], p
 
     def default_stop_crit(self) -> pxa.StoppingCriterion:
@@ -232,7 +236,7 @@ class RRL(pxa.Solver):
         return stop_crit
 
     def objective_func(self) -> pxt.NDArray:
-        func = lambda x: self._f.apply(self._H.apply(x)) + self._R.apply(x)
+        func = lambda x: self._f.apply(self._H.apply(x) + self._bg) + self._R.apply(x)
         y = func(self._mstate["x"])
         self._mstate["f"] = y
         return y
