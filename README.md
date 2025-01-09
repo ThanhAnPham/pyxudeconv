@@ -21,14 +21,25 @@ https://napari.org/stable/plugins/index.html
 
 ## Installation
 
-You can install `pyxudeconv` via [pip]:
+Before running pip install, please install via conda some packages beforehand (avoid incompatibilities):
+
+    conda install -c conda-forge numpy scipy
+
+You can then install `pyxudeconv` via [pip] (please look at the next section first):
 
     pip install pyxudeconv
+
+or with GPU compatibility via [pip] (e.g., CUDA 12.x):
+
+    pip install pyxudeconv[gpu12]
+
+#### Important note for GPU version
+
+- Please install torch with the correct CUDA version via the official pytorch website and via conda.
 
 To install latest development version :
 
     pip install git+https://github.com/ThanhAnPham/pyxudeconv.git
-
 
 ## Deconvolution with Pyxu
 

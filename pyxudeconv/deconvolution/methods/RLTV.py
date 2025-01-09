@@ -31,7 +31,7 @@ class RLTV(HyperParametersDeconvolutionOptimizer):
                 self._param_method['epsi'] = [1e-3]
             return self._param_method
         else:
-            params = {'tau':[0.1],'acceleration':[True],}
+            params = {'tau':[0.1],'acceleration':[True],'epsi', 1e-3}
             return params
 
     def init_solver(self, param):

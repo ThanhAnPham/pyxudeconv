@@ -31,8 +31,10 @@ def deconvolve(par=None):
 
     if par is None:
         par = get_param()
-
-    if par.gpu >= 0:
+    
+    cupy_spec = importlib.util.find_spec("cupy")
+    found = cupy_spec is not None
+    if par.gpu >= 0 and found:
         ordi = platform.system()
         if ordi == 'Darwin':  # mac, uncertain compatibilities
             print('On mac')

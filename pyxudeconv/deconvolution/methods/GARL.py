@@ -73,6 +73,10 @@ class GARL(HyperParametersDeconvolutionOptimizer):
                         new_params.pop(cp + '_min')
                         new_params.pop(cp + '_max')
                         new_params.pop(cp + '_nsteps')
+                if 'acceleration' not in new_params.keys():
+                    new_params['acceleration'] = [True]
+                if 'epsi' not in new_params.keys():
+                    new_params['epsi'] = [1e-3]
                 return new_params
         else:
             #Load some default configurations in the package
