@@ -216,7 +216,7 @@ class RRL(pxa.Solver):
         p = mst["x"] - mst["x_prev"]
         p *= a
         p += mst["x"]
-        p.clip(self._lb, self._ub, out=p) # minimum background level
+        p.clip(self._lb, self._ub, out=p) # NOTE: minimum value 1e-6 
         p *= (self._H.adjoint(self._g / xp.maximum(self._H(p) + self._bg, self._epsi)) -
               self._R.grad(p)) / self._Ht1
         p.clip(self._lb, self._ub, out=p)
