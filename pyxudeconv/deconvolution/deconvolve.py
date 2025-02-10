@@ -31,7 +31,7 @@ def deconvolve(par=None):
 
     if par is None:
         par = get_param()
-    
+
     cupy_spec = importlib.util.find_spec("cupy")
     found = cupy_spec is not None
     if par.gpu >= 0 and found:
@@ -125,16 +125,16 @@ def deconvolve(par=None):
         if not os.path.exists(par.fres):
             os.makedirs(par.fres)
         with open(par.fres + '/params.json', 'w', encoding="utf-8") as f:
-            cpar = vars(par)
+            cpar = vars(par).copy()
             cpar['psf_sz'] = cpar['psf_sz'] if isinstance(
                 cpar['psf_sz'], list) else list(cpar['psf_sz'])
-            if not isinstance(cpar['datapath'],str):
-                cpar['datapath'] = "Numpy variable"
-            if not isinstance(cpar['psfpath'],str):
-                cpar['psfpath'] = "Numpy variable"
-            if not isinstance(cpar['phantom'],str):
-                cpar['phantom'] = "Numpy variable"
-            
+            if not isinstance(cpar['datapath'], str):
+                cpar['datapath'] = "variable"
+            if not isinstance(cpar['psfpath'], str):
+                cpar['psfpath'] = "variable"
+            if not isinstance(cpar['phantom'], str):
+                cpar['phantom'] = "variable"
+
             json.dump(cpar, f, indent=2, default=int)
 
     if par.fres:
