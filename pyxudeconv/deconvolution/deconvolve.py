@@ -128,6 +128,10 @@ def deconvolve(par=None):
             cpar = par
             cpar.psf_sz = cpar.psf_sz if isinstance(
                 cpar.psf_sz, list) else list(cpar.psf_sz)
+            if not isinstance(cpar.datapath,str):
+                cpar.datapath = "Numpy variable"
+            if not isinstance(cpar.psfpath,str):
+                cpar.psfpath = "Numpy variable"
             cpar = vars(cpar)
             json.dump(cpar, f, indent=2, default=int)
 
