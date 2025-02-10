@@ -125,7 +125,7 @@ def deconvolve(par=None):
         if not os.path.exists(par.fres):
             os.makedirs(par.fres)
         with open(par.fres + '/params.json', 'w', encoding="utf-8") as f:
-            cpar = par
+            cpar = par.copy()
             cpar.psf_sz = cpar.psf_sz if isinstance(
                 cpar.psf_sz, list) else list(cpar.psf_sz)
             if not isinstance(cpar.datapath,str):
