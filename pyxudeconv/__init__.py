@@ -1,4 +1,4 @@
-__version__ = "0.0.2.8.1"
+__version__ = "0.0.2.9"
 
 from pyxudeconv.deconvolution.deconvolve import deconvolve
 from pyxudeconv.deconvolution.params import get_param
