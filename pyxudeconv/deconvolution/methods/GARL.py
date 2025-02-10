@@ -83,15 +83,19 @@ class GARL(HyperParametersDeconvolutionOptimizer):
             self._param_method = 'widefield_params' if len(
                 self._forw.codim_shape) == len(
                     self._forw.dim_shape) else 'airyscan_params'
+        # The `module_config` variable in the code is being used to dynamically import and access
+        # configuration functions for the Goujon Accelerated Richardson-Lucy (GARL) deconvolution
+        # optimizer. It is used to load specific configuration settings based on the modality of the
+        # data being processed (either 'widefield_params' or 'airyscan_params').
         module_config = importlib.import_module(
             'pyxudeconv.deconvolution.methods.configs.GARL.' +
             self._param_method)
         config_fct = getattr(module_config, self._param_method)
         params = config_fct()
-        if not hasattr(self._param_method, 'acceleration'):
-            self._param_method['acceleration'] = [True]
-        if not hasattr(self._param_method, 'epsi'):
-            self._param_method['epsi'] = [1e-3]
+        if not hasattr(params, 'acceleration'):
+            params['acceleration'] = [True]
+        if not hasattr(params, 'epsi'):
+            params['epsi'] = [1e-3]
         return params
 
     def init_solver(self, param):
