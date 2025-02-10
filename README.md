@@ -1,13 +1,13 @@
-# pyxudeconv
+# Package pyxudeconv
 
 [![License MIT](https://img.shields.io/pypi/l/pyxudeconv.svg?color=green)](https://github.com/ThanhAnPham/pyxudeconv/raw/main/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/pyxudeconv.svg?color=green)](https://pypi.org/project/pyxudeconv)
 [![Python Version](https://img.shields.io/pypi/pyversions/pyxudeconv.svg?color=green)](https://python.org)
-[![tests](https://github.com/ThanhAnPham/pyxudeconv/workflows/tests/badge.svg)](https://github.com/ThanhAnPham/pyxudeconv/actions)
+<!--[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/pyxudeconv)](https://napari-hub.org/plugins/pyxudeconv)
 [![codecov](https://codecov.io/gh/ThanhAnPham/pyxudeconv/branch/main/graph/badge.svg)](https://codecov.io/gh/ThanhAnPham/pyxudeconv)
-[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/pyxudeconv)](https://napari-hub.org/plugins/pyxudeconv)
+[![tests](https://github.com/ThanhAnPham/pyxudeconv/workflows/tests/badge.svg)](https://github.com/ThanhAnPham/pyxudeconv/actions)-->
 
-3D Deconvolution with Pyxu library
+3D Deconvolution with Pyxu library. In particular, it includes the Goujon accelerated Richardson-Lucy (GARL). Please read the extended documentation (GARL PDF file) to know more about the method.
 
 ----------------------------------
 
@@ -128,7 +128,7 @@ Alternatively, one can set a range of values for a parameter (e.g., `lmbd`) as f
 ````
 
 ## Simulation
-#ToDo
+
 The function `simulate`can simulate measurements obtained from a phantom defined by `--phantom your_phantom_file` convolved with a PSF defined by `--psfpath your_psf_file`. Future releases may change the organisation of the simulation part.
 
 
